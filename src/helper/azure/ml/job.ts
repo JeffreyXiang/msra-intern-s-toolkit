@@ -109,6 +109,28 @@ export function buildSingulaitySpec(
     sshPublicKey: string | undefined,
     enableAzmlInt: boolean,
 ): Spec{
+    let resources: any = {
+        instance_type: `Singularity.${instanceType}`,
+        instance_count: nodeCount,
+        properties: {
+            AISuperComputer: {
+                interactive: interactive,
+                imageVersion: image.name,
+                priority: priority,
+                slaTier: slaTier,
+                sshPublicKey: sshPublicKey,
+                enableAzmlInt: enableAzmlInt,
+                scalePolicy: {
+                    autoScaleIntervalInSec: 120,
+                    maxInstanceTypeCount: nodeCount,
+                    minInstanceTypeCount: nodeCount,
+                }
+            },
+        },
+    };
+    if (location) {
+        resources['locations'] = location;
+    }
     return new Spec(
         displayName,
         experimentName,
@@ -128,26 +150,7 @@ export function buildSingulaitySpec(
             type: 'PyTorch',
             process_count_per_instance: 1,
         },
-        {
-            instance_type: `Singularity.${instanceType}`,
-            instance_count: nodeCount,
-            locations: location,
-            properties: {
-                AISuperComputer: {
-                    interactive: interactive,
-                    imageVersion: image.name,
-                    priority: priority,
-                    slaTier: slaTier,
-                    sshPublicKey: sshPublicKey,
-                    enableAzmlInt: enableAzmlInt,
-                    scalePolicy: {
-                        autoScaleIntervalInSec: 120,
-                        maxInstanceTypeCount: nodeCount,
-                        minInstanceTypeCount: nodeCount,
-                    }
-                },
-            },
-        },
+        resources,
     );
 }
 

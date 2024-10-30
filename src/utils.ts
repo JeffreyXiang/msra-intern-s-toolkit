@@ -43,6 +43,22 @@ export function objToMap(obj: any): Map<any, any> {
     return map;
 }
 
+export function safeQueryObject(obj: any, query: string): any {
+    if (typeof obj !== 'object') {
+        return undefined;
+    }
+    let keys = query.split('.');
+    let result = obj;
+    for (let key of keys) {
+        if (result.hasOwnProperty(key)) {
+            result = result[key as keyof typeof result];
+        } else {
+            return undefined;
+        }
+    }
+    return result;
+}
+
 export function showErrorMessageWithHelp(text: string){
     vscode.window.showErrorMessage(text, 'Helps' ,'OK').then((choice) => {
         if (choice == 'Helps'){

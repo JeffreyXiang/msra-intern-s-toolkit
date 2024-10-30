@@ -811,7 +811,9 @@
         }
 
         function config_changed(group, label, value=null) {
-            value = (value == null) ? document.getElementById(label).value : value;
+            if (label != 'location') {
+                value = (value == null) ? document.getElementById(label).value : value;
+            }
             if (label == 'node_count') {
                 value = parseInt(value);
             }
@@ -903,7 +905,7 @@
             
             // Hide the dropdown when clicking outside of it
             window.onclick = (event) => {
-                if (!event.target.matches('#dropdown') && !event.target.matches('.with_dropdown')) {
+                if (!event.target.closest('#dropdown') && !event.target.matches('.with_dropdown')) {
                     hide_dropdown();
                 }
             };

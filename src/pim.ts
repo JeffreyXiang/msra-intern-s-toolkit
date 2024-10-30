@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {vscodeContext, outputChannel} from './extension'
-import {showErrorMessageWithHelp, mapToObj, objToMap} from './utils'
+import {showErrorMessageWithHelp, mapToObj, objToMap, safeQueryObject} from './utils'
 import {getFile, saveFile, exists} from './helper/file_utils'
 import * as azure from './helper/azure'
 import * as profile from './profile'
@@ -24,7 +24,15 @@ function addPlanedTask(role: azure.pim.Role, planedTime: Date) {
                 if (autoActivationEnabled.get(role.name)) {
                     // Expired, activate again
                     ui.update(role.name, 'deactivated');
-                    await activate(role.name);
+                    try {
+                        await activate(role.name);
+                    } catch (error) {
+                        if (error === 'role_assignment_exists') {
+                            addPlanedTask(role, new Date(planedTime.getTime() + 60000));
+                            return;
+                        }
+                        throw error;
+                    }
                 }
                 else {
                     ui.update(role.name, 'deactivated');
@@ -64,6 +72,10 @@ export async function activate(name: string) {
         try {
             await azure.pim.activateRole(role, activeProfile!.azureConfigDir);
         } catch (error) {
+            if (safeQueryObject(error, 'error.code') === 'RoleAssignmentExists') {
+                // Not expired yet, plan another task after 1 minutes
+                throw 'role_assignment_exists';
+            }
             showErrorMessageWithHelp(`Failed to activate role: ${error}`);
             ui.update(role.name, 'deactivated');
             throw 'failed_to_activate_role'
